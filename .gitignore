@@ -1,21 +1,13 @@
-# Python
+.venv/
 __pycache__/
 *.py[cod]
-.Python
-.venv/
-.venv*/
 
-# Runtime financial data and browser state
 data/
-chrome_profiles/
-screenshots/
-backups/
-automation_record_log.txt
-dashboard_state.json
-last_result.json
+Statements/
 
-# Local OS/editor files
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
+*.db
+*.db-shm
+*.db-wal
+*.log
+
+dashboard_window_profile/

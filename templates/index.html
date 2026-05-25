@@ -1,0 +1,2763 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Financial Dashboard</title>
+  <style>
+    :root {
+      --bg: #f6f7f2;
+      --surface: #ffffff;
+      --ink: #202124;
+      --muted: #687076;
+      --line: #d9ddd4;
+      --green: #287a54;
+      --red: #b04438;
+      --blue: #2864a8;
+      --gold: #9a6a13;
+    }
+
+    body.night {
+      --bg: #161816;
+      --surface: #232623;
+      --ink: #f0f2ed;
+      --muted: #aeb7af;
+      --line: #3b413b;
+      --green: #72c596;
+      --red: #e0786c;
+      --blue: #82ace7;
+      --gold: #d6ad52;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 28px clamp(16px, 4vw, 48px) 18px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    h1 {
+      font-size: clamp(30px, 4vw, 46px);
+      line-height: 1.05;
+    }
+
+    h2 {
+      font-size: 19px;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    main {
+      display: grid;
+      gap: 22px;
+      padding: 24px clamp(16px, 4vw, 48px) 48px;
+    }
+
+    .tabbar {
+      display: flex;
+      gap: 8px;
+      padding: 12px clamp(16px, 4vw, 48px) 0;
+      background: var(--bg);
+    }
+
+    .tab-button {
+      background: transparent;
+      border-color: var(--line);
+      color: var(--muted);
+      min-width: 110px;
+    }
+
+    .tab-button.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+
+    body.night .tab-button {
+      background: #1b1f1b;
+      border-color: #465046;
+      color: #c8d2c9;
+    }
+
+    body.night .tab-button.active {
+      background: #82ace7;
+      border-color: #82ace7;
+      color: #101410;
+    }
+
+    .tab-view {
+      display: none;
+    }
+
+    .tab-view.active {
+      display: grid;
+    }
+
+    button {
+      border: 1px solid var(--blue);
+      background: var(--blue);
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      padding: 10px 14px;
+    }
+
+    select, input {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      font: inherit;
+      padding: 9px 10px;
+      min-width: 0;
+    }
+
+    body.night select,
+    body.night input {
+      background: #181c18;
+      border-color: #586258;
+      color: var(--ink);
+    }
+
+    body.night input::placeholder {
+      color: #8e998f;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    label span {
+      color: var(--muted);
+    }
+
+    .toolbar {
+      align-items: end;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .icon-button {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+      font-size: 20px;
+    }
+
+    .section-head {
+      align-items: center;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .section-head h2 {
+      margin-bottom: 0;
+    }
+
+    .segmented {
+      display: inline-flex;
+      gap: 4px;
+    }
+
+    .segmented button,
+    .compact-button {
+      background: #fff;
+      border-color: var(--line);
+      color: var(--blue);
+      font-size: 12px;
+      padding: 6px 9px;
+    }
+
+    body.night .segmented button,
+    body.night .compact-button,
+    body.night .secondary,
+    body.night .detail-toggle,
+    body.night .pager button {
+      background: #1b1e1b;
+      border-color: #586258;
+      color: var(--blue);
+    }
+
+    body.night .detail-toggle[aria-expanded="true"] {
+      background: #213247;
+      border-color: var(--blue);
+    }
+
+    .segmented button.active {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: .65;
+    }
+
+    .muted { color: var(--muted); }
+    .error { color: var(--red); font-weight: 700; }
+
+    .metrics {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .metric, .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-width: 0;
+    }
+
+    .metric {
+      position: relative;
+      padding-right: 48px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: clamp(24px, 3vw, 34px);
+      line-height: 1.15;
+      margin: 9px 0 4px;
+    }
+
+    .animated-number {
+      display: inline-block;
+      font-variant-numeric: tabular-nums;
+      transition: color .18s ease, opacity .18s ease;
+    }
+
+    .animated-number.counting {
+      opacity: .78;
+    }
+
+    .metric-details {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .detail-toggle {
+      align-items: center;
+      background: #fff;
+      border-color: var(--line);
+      color: var(--blue);
+      display: inline-grid;
+      font-size: 13px;
+      height: 28px;
+      justify-content: center;
+      padding: 0;
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      width: 28px;
+    }
+
+    .detail-toggle[aria-expanded="true"] {
+      border-color: var(--blue);
+      background: #eef5ff;
+    }
+
+    .mini-table {
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .mini-table th,
+    .mini-table td {
+      font-size: 12px;
+      padding: 7px 8px;
+    }
+
+    .pager {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .pager button {
+      background: #fff;
+      border-color: var(--line);
+      color: var(--blue);
+      font-size: 12px;
+      padding: 5px 8px;
+    }
+
+    .table-pager {
+      margin-top: 8px;
+    }
+
+    .sort-button {
+      align-items: center;
+      background: transparent;
+      border: 0;
+      color: inherit;
+      display: inline-flex;
+      font: inherit;
+      font-weight: 700;
+      gap: 4px;
+      padding: 0;
+      text-align: left;
+      text-transform: inherit;
+    }
+
+    .sort-button::after {
+      color: var(--muted);
+      content: "↕";
+      font-size: 11px;
+    }
+
+    .sort-button[data-direction="asc"]::after {
+      content: "↑";
+    }
+
+    .sort-button[data-direction="desc"]::after {
+      content: "↓";
+    }
+
+    .metric.expense strong { color: var(--red); }
+    .metric.income strong { color: var(--green); }
+    .metric.bill strong { color: var(--gold); }
+    .metric.net strong { color: var(--blue); }
+
+    .net-worth-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .sync-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .sync-control-panel {
+      grid-column: span 2;
+    }
+
+    .panel-head {
+      align-items: start;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+    }
+
+    .sync-picker {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin: 12px 0;
+      padding: 10px;
+    }
+
+    .sync-picker summary {
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .sync-institution-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .sync-institution-row {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+    }
+
+    .sync-institution-row label {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+      margin: 0;
+    }
+
+    .sync-actions {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .console-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .console-log {
+      background: #101410;
+      border: 1px solid #2e362e;
+      border-radius: 8px;
+      color: #d7ead8;
+      font: 13px/1.45 Consolas, "Courier New", monospace;
+      height: min(68vh, 760px);
+      margin: 0;
+      overflow: auto;
+      padding: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    body.night .console-log {
+      background: #0d100d;
+      border-color: #465046;
+      color: #dcefe0;
+    }
+
+    .net-worth-total {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-top: 6px;
+    }
+
+    .net-worth-wrap {
+      position: relative;
+      padding-right: 42px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(280px, .85fr);
+      gap: 18px;
+    }
+
+    .chart {
+      display: grid;
+      gap: 10px;
+    }
+
+    .row-chart {
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1fr) 112px;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .category-row {
+      align-items: start;
+      gap: 14px;
+      grid-template-columns: minmax(112px, .42fr) minmax(54px, 1fr) 88px;
+    }
+
+    .category-row strong {
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+
+    .category-row .track {
+      padding-top: 4px;
+    }
+
+    .pie-layout {
+      align-items: center;
+      display: grid;
+      gap: 18px;
+      grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+    }
+
+    .pie-chart {
+      aspect-ratio: 1;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 18px var(--surface);
+      width: 100%;
+    }
+
+    .pie-chart.chart-animate {
+      animation: pieReveal .38s ease-out both;
+    }
+
+    .pie-legend {
+      display: grid;
+      gap: 8px;
+    }
+
+    .legend-row {
+      align-items: center;
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 12px minmax(0, 1fr) auto;
+      font-size: 13px;
+    }
+
+    .swatch {
+      border-radius: 3px;
+      height: 12px;
+      width: 12px;
+    }
+
+    .month-button {
+      grid-column: 1 / -1;
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1fr) 112px;
+      align-items: center;
+      gap: 10px;
+      padding: 3px 0;
+      text-align: left;
+    }
+
+    .month-button:hover {
+      background: #f3f5ef;
+    }
+
+    body.night .month-button:hover {
+      background: #2b302b;
+    }
+
+    .recurring-button {
+      background: transparent;
+      border: 0;
+      color: var(--blue);
+      display: inline;
+      font: inherit;
+      font-weight: 700;
+      padding: 0;
+      text-align: left;
+    }
+
+    .recurring-button:hover {
+      text-decoration: underline;
+    }
+
+    .recurring-details {
+      background: #fbfcf8;
+    }
+
+    body.night .recurring-details {
+      background: #1d211d;
+    }
+
+    .track {
+      display: grid;
+      gap: 3px;
+    }
+
+    .bar {
+      min-width: 2px;
+      height: 10px;
+      border-radius: 999px;
+      transition: width .34s cubic-bezier(.2, .7, .2, 1);
+      will-change: width;
+    }
+
+    .bar.income { background: var(--green); }
+    .bar.expense { background: var(--red); }
+    .bar.bill { background: var(--gold); }
+
+    @keyframes pieReveal {
+      from {
+        opacity: .45;
+        transform: scale(.96) rotate(-4deg);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .bar,
+      .animated-number {
+        transition: none;
+      }
+
+      .pie-chart.chart-animate {
+        animation: none;
+      }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: #eff2ec;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    body.night th {
+      background: #2d322d;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .amount {
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .positive { color: var(--green); }
+    .negative { color: var(--red); }
+
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      color: var(--muted);
+      background: #fff;
+      font-size: 12px;
+    }
+
+    body.night .pill {
+      background: #1b1e1b;
+    }
+
+    dialog {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0;
+      width: min(760px, calc(100vw - 32px));
+    }
+
+    body.night dialog {
+      background: var(--surface);
+      border-color: #586258;
+      color: var(--ink);
+      box-shadow: 0 20px 80px rgba(0, 0, 0, .55);
+    }
+
+    #monthDialog {
+      width: min(980px, calc(100vw - 32px));
+    }
+
+    dialog::backdrop {
+      background: rgba(32, 33, 36, .35);
+    }
+
+    body.night dialog::backdrop {
+      background: rgba(0, 0, 0, .62);
+    }
+
+    .modal {
+      display: grid;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .modal-head {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .folder-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: minmax(220px, 1.4fr) minmax(150px, .8fr) 140px auto;
+      align-items: end;
+    }
+
+    .secondary {
+      background: #fff;
+      color: var(--blue);
+    }
+
+    body.night .secondary {
+      background: #1b1e1b;
+      border-color: #586258;
+      color: var(--blue);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .danger {
+      border-color: var(--red);
+      background: #fff;
+      color: var(--red);
+    }
+
+    @media (max-width: 900px) {
+      header { align-items: start; flex-direction: column; }
+      .metrics, .split, .net-worth-grid, .sync-grid { grid-template-columns: 1fr; }
+      .toolbar { justify-content: flex-start; }
+      .form-grid, .folder-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .row-chart { grid-template-columns: 1fr; }
+      .category-row { grid-template-columns: minmax(112px, .42fr) minmax(54px, 1fr) 88px; }
+      .pie-layout { grid-template-columns: 1fr; }
+      table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Financial Dashboard</h1>
+      <p id="range" class="muted">Ready to import statements.</p>
+    </div>
+    <div class="toolbar">
+      <label>
+        <span>Institution</span>
+        <select id="institutionFilter"></select>
+      </label>
+      <label>
+        <span>Time</span>
+        <select id="periodFilter">
+          <option value="ytd">Year to date</option>
+          <option value="1m">Past month</option>
+          <option value="3m">Past 3 months</option>
+          <option value="6m">Past 6 months</option>
+          <option value="12m">Past year</option>
+          <option value="all">Show all</option>
+        </select>
+      </label>
+      <button id="importButton">Import Statements</button>
+      <button id="settingsButton" class="icon-button" title="Settings" aria-label="Settings">&#9881;</button>
+      <p id="message" class="muted"></p>
+    </div>
+  </header>
+
+  <nav class="tabbar" aria-label="Dashboard tabs">
+    <button class="tab-button active" type="button" data-tab-target="mainTab">MAIN</button>
+    <button class="tab-button" type="button" data-tab-target="syncTab">SYNC</button>
+    <button class="tab-button" type="button" data-tab-target="consoleTab">CONSOLE</button>
+  </nav>
+
+  <main id="mainTab" class="tab-view active">
+    <section id="metrics" class="metrics"></section>
+
+    <section class="panel">
+      <h2>Net Worth</h2>
+      <div id="netWorth"></div>
+    </section>
+
+    <section class="split">
+      <div class="panel">
+        <div class="section-head">
+          <h2>Monthly Cash Flow</h2>
+          <div class="segmented" aria-label="Monthly cash flow order">
+            <button id="monthlyCurrentFirstButton" type="button">Current First</button>
+            <button id="monthlyJanuaryFirstButton" class="active" type="button">January First</button>
+          </div>
+        </div>
+        <div id="monthly" class="chart"></div>
+      </div>
+      <div class="panel">
+        <div class="section-head">
+          <h2>Spending Categories</h2>
+          <div class="segmented" aria-label="Spending category view">
+            <button id="categoryBarButton" class="active" type="button">Bar</button>
+            <button id="categoryPieButton" type="button">Pie</button>
+          </div>
+        </div>
+        <div id="categories" class="chart"></div>
+      </div>
+    </section>
+
+    <section class="split">
+      <div>
+        <h2>Latest Transactions</h2>
+        <table>
+          <thead>
+            <tr>
+              <th><button class="sort-button" type="button" data-sort-table="latest" data-sort-field="transaction_date">Date</button></th>
+              <th><button class="sort-button" type="button" data-sort-table="latest" data-sort-field="account_name">Account</button></th>
+              <th><button class="sort-button" type="button" data-sort-table="latest" data-sort-field="description">Description</button></th>
+              <th><button class="sort-button" type="button" data-sort-table="latest" data-sort-field="category">Category</button></th>
+              <th><button class="sort-button" type="button" data-sort-table="latest" data-sort-field="amount">Amount</button></th>
+            </tr>
+          </thead>
+          <tbody id="latest"></tbody>
+        </table>
+        <div id="latestPager" class="pager table-pager"></div>
+      </div>
+      <div>
+        <h2>Repeated Transactions</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Transaction</th>
+              <th>Shown</th>
+              <th>Latest</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="recurring"></tbody>
+        </table>
+        <div id="recurringPager" class="pager table-pager"></div>
+      </div>
+    </section>
+
+    <section class="split">
+      <div>
+        <h2>Accounts</h2>
+        <table>
+          <thead>
+            <tr>
+              <th><button class="sort-button" type="button" data-sort-table="accounts" data-sort-field="name">Account</button></th>
+              <th><button class="sort-button" type="button" data-sort-table="accounts" data-sort-field="transactions">Transactions</button></th>
+              <th><button class="sort-button" type="button" data-sort-table="accounts" data-sort-field="expenses">Expenses</button></th>
+              <th><button class="sort-button" type="button" data-sort-table="accounts" data-sort-field="income">Income</button></th>
+              <th><button class="sort-button" type="button" data-sort-table="accounts" data-sort-field="latest">Latest</button></th>
+            </tr>
+          </thead>
+          <tbody id="accounts"></tbody>
+        </table>
+      </div>
+      <div>
+        <h2>Statements</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Period End</th>
+              <th>Balance</th>
+              <th>File</th>
+            </tr>
+          </thead>
+          <tbody id="statements"></tbody>
+        </table>
+        <div id="statementsPager" class="pager table-pager"></div>
+      </div>
+    </section>
+  </main>
+
+  <main id="syncTab" class="tab-view">
+    <section class="sync-grid">
+      <article class="panel sync-control-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Sync Automation</h2>
+            <p class="muted">Select institutions, open login browsers if needed, then sync them together.</p>
+          </div>
+          <button id="syncSelectedButton" type="button">Sync Selected</button>
+        </div>
+        <details class="sync-picker" open>
+          <summary>Institutions</summary>
+          <div class="sync-institution-list">
+            <div class="sync-institution-row">
+              <label>
+                <input class="sync-institution-check" type="checkbox" value="citizens" checked>
+                <span>Citizens</span>
+              </label>
+              <button class="secondary open-login-button" type="button" data-open-institution="citizens">Open Login Browser</button>
+            </div>
+            <div class="sync-institution-row">
+              <label>
+                <input class="sync-institution-check" type="checkbox" value="amex" checked>
+                <span>Amex</span>
+              </label>
+              <button class="secondary open-login-button" type="button" data-open-institution="amex">Open Login Browser</button>
+            </div>
+            <div class="sync-institution-row">
+              <label>
+                <input class="sync-institution-check" type="checkbox" value="chase" checked>
+                <span>Chase</span>
+              </label>
+              <button class="secondary open-login-button" type="button" data-open-institution="chase">Open Login Browser</button>
+            </div>
+            <div class="sync-institution-row">
+              <label>
+                <input class="sync-institution-check" type="checkbox" value="citi" checked>
+                <span>Citi</span>
+              </label>
+              <button class="secondary open-login-button" type="button" data-open-institution="citi">Open Login Browser</button>
+            </div>
+            <div class="sync-institution-row">
+              <label>
+                <input class="sync-institution-check" type="checkbox" value="vanguard" checked>
+                <span>Vanguard</span>
+              </label>
+              <button class="secondary open-login-button" type="button" data-open-institution="vanguard">Open Login Browser</button>
+            </div>
+          </div>
+        </details>
+        <div class="sync-actions">
+          <button id="selectAllSyncInstitutions" class="secondary" type="button">Select All</button>
+          <button id="clearSyncInstitutions" class="secondary" type="button">Clear</button>
+          <button id="openSelectedLoginBrowsers" class="secondary" type="button">Open Selected Login Browsers</button>
+        </div>
+      </article>
+      <article class="panel">
+        <h2>Sync Message</h2>
+        <p id="syncMessage" class="muted">Ready to sync latest transactions and live balances.</p>
+      </article>
+      <article id="citiCodePanel" class="panel hidden">
+        <h2>Citi Verification</h2>
+        <label>
+          <span>6-digit code</span>
+          <input id="citiInlineCodeInput" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000">
+        </label>
+        <div class="sync-actions">
+          <button id="submitCitiInlineCode" type="button" disabled>Continue Sync</button>
+        </div>
+        <p id="citiInlineCodeMessage" class="muted"></p>
+      </article>
+      <article id="vanguardCodePanel" class="panel hidden">
+        <h2>Vanguard Verification</h2>
+        <label>
+          <span>6-digit code</span>
+          <input id="vanguardInlineCodeInput" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000">
+        </label>
+        <div class="sync-actions">
+          <button id="submitVanguardInlineCode" type="button" disabled>Continue Sync</button>
+        </div>
+        <p id="vanguardInlineCodeMessage" class="muted"></p>
+      </article>
+    </section>
+
+    <section class="sync-grid">
+      <article class="metric net">
+        <h3>Status</h3>
+        <strong id="syncStatusValue">Idle</strong>
+        <span id="syncStatusTime" class="muted">No sync has run yet.</span>
+      </article>
+      <article class="metric income">
+        <h3>Latest Live Balance</h3>
+        <strong id="syncBalanceValue">-</strong>
+        <span id="syncBalanceTime" class="muted">Waiting for online banking.</span>
+      </article>
+      <article class="metric bill">
+        <h3>Synced Transactions</h3>
+        <strong id="syncTransactionCount">0</strong>
+        <span class="muted">Latest live rows stored locally.</span>
+      </article>
+    </section>
+
+    <section class="split">
+      <div>
+        <h2>Live Transactions</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Account</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody id="syncTransactions"></tbody>
+        </table>
+        <div id="syncTransactionsPager" class="pager table-pager"></div>
+      </div>
+      <div>
+        <h2>Live Balances</h2>
+        <table>
+          <thead>
+            <tr>
+              <th><button class="sort-button" type="button" data-sort-table="syncBalances" data-sort-field="account_name">Account</button></th>
+              <th><button class="sort-button" type="button" data-sort-table="syncBalances" data-sort-field="account_type">Type</button></th>
+              <th><button class="sort-button" type="button" data-sort-table="syncBalances" data-sort-field="captured_at">Captured</button></th>
+              <th><button class="sort-button" type="button" data-sort-table="syncBalances" data-sort-field="source">Source</button></th>
+              <th><button class="sort-button" type="button" data-sort-table="syncBalances" data-sort-field="amount">Amount</button></th>
+            </tr>
+          </thead>
+          <tbody id="syncBalances"></tbody>
+        </table>
+        <div id="syncBalancesPager" class="pager table-pager"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Sync History</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Started</th>
+            <th>Finished</th>
+            <th>Status</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody id="syncRuns"></tbody>
+      </table>
+      <div id="syncRunsPager" class="pager table-pager"></div>
+    </section>
+  </main>
+
+  <main id="consoleTab" class="tab-view">
+    <section class="panel console-panel">
+      <div class="section-head">
+        <div>
+          <h2>Console</h2>
+          <p id="consoleMeta" class="muted">Server output will appear here after launch.</p>
+        </div>
+        <button id="refreshConsoleButton" class="secondary" type="button">Refresh</button>
+      </div>
+      <pre id="consoleLog" class="console-log">Waiting for console output...</pre>
+    </section>
+  </main>
+
+  <dialog id="settingsDialog">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2>Settings</h2>
+          <p class="muted">Dashboard preferences and extra statement folders.</p>
+        </div>
+        <button id="closeSettings" class="secondary" type="button">Close</button>
+      </div>
+
+      <section class="panel">
+        <h2>Repeated Transaction Rules</h2>
+        <p class="muted">A transaction appears when its normalized name repeats in the selected institution and time window.</p>
+        <div class="form-grid">
+          <label>
+            <span>Minimum times shown</span>
+            <input id="recurringMin" type="number" min="2" max="24" step="1">
+          </label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Appearance</h2>
+        <div class="form-grid">
+          <label>
+            <span>Night mode</span>
+            <select id="nightMode">
+              <option value="0">Off</option>
+              <option value="1">On</option>
+            </select>
+          </label>
+        </div>
+        <button id="saveSettings" type="button">Save Settings</button>
+      </section>
+
+      <section class="panel">
+        <h2>Additional Statement Folders</h2>
+        <h3>Currently Tracked</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Folder</th>
+              <th>Institution</th>
+              <th>Type</th>
+              <th>Files</th>
+            </tr>
+          </thead>
+          <tbody id="trackedFolderRows"></tbody>
+        </table>
+        <div class="folder-grid">
+          <label>
+            <span>Folder path</span>
+            <input id="folderPath" placeholder="C:\Users\...\Statements">
+          </label>
+          <label>
+            <span>Institution name</span>
+            <input id="folderAccountName" placeholder="New Bank">
+          </label>
+          <label>
+            <span>Account type</span>
+            <select id="folderAccountType">
+              <option value="debit">Debit / Checking</option>
+              <option value="credit">Credit Card</option>
+              <option value="savings">Savings</option>
+            </select>
+          </label>
+          <button id="addFolder" type="button">Add Folder</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Folder</th>
+              <th>Institution</th>
+              <th>Type</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="folderRows"></tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <h2>Manual Assets & Liabilities</h2>
+        <div class="folder-grid">
+          <label>
+            <span>Name</span>
+            <input id="assetName" placeholder="High-yield savings">
+          </label>
+          <label>
+            <span>Institution</span>
+            <input id="assetInstitution" placeholder="Bank or broker">
+          </label>
+          <label>
+            <span>Type</span>
+            <select id="assetType">
+              <option value="savings">Savings</option>
+              <option value="investment">Investment</option>
+              <option value="retirement">Retirement</option>
+              <option value="rewards">Rewards</option>
+              <option value="checking">Checking</option>
+              <option value="cash">Cash</option>
+              <option value="loan">Loan</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label>
+            <span>Asset or liability</span>
+            <select id="assetBalanceType">
+              <option value="asset">Asset</option>
+              <option value="liability">Liability</option>
+            </select>
+          </label>
+          <label>
+            <span>Amount</span>
+            <input id="assetAmount" inputmode="decimal" placeholder="0.00">
+          </label>
+          <button id="addAsset" type="button">Add</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Institution</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="manualAssetRows"></tbody>
+        </table>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog id="monthDialog">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2 id="monthTitle">Month Details</h2>
+          <p id="monthSummary" class="muted"></p>
+        </div>
+        <button id="closeMonth" class="secondary" type="button">Close</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Account</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody id="monthTransactions"></tbody>
+      </table>
+    </div>
+  </dialog>
+
+  <dialog id="citiCodeDialog">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2>Citi Verification</h2>
+          <p class="muted">Enter the 6-digit code Citi texted to continue the sync.</p>
+        </div>
+        <button id="closeCitiCode" class="secondary" type="button">Close</button>
+      </div>
+      <label>
+        <span>Verification code</span>
+        <input id="citiCodeInput" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000">
+      </label>
+      <button id="submitCitiCode" type="button" disabled>Continue Sync</button>
+      <p id="citiCodeMessage" class="muted"></p>
+    </div>
+  </dialog>
+
+  <dialog id="vanguardCodeDialog">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2>Vanguard Verification</h2>
+          <p class="muted">Enter the 6-digit code Vanguard texted to continue the sync.</p>
+        </div>
+        <button id="closeVanguardCode" class="secondary" type="button">Close</button>
+      </div>
+      <label>
+        <span>Verification code</span>
+        <input id="vanguardCodeInput" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000">
+      </label>
+      <button id="submitVanguardCode" type="button" disabled>Continue Sync</button>
+      <p id="vanguardCodeMessage" class="muted"></p>
+    </div>
+  </dialog>
+
+  <script>
+    let currentInstitution = "all";
+    let currentPeriod = "ytd";
+    let settingsCache = null;
+    let currentTab = "mainTab";
+    let syncPollTimer = null;
+    let consolePollTimer = null;
+    let citiCodeVerifying = false;
+    let vanguardCodeVerifying = false;
+    let detailPagers = {};
+    let latestRowsCache = [];
+    let recurringRowsCache = [];
+    let accountRowsCache = [];
+    let statementRowsCache = [];
+    let syncTransactionsCache = [];
+    let syncBalancesCache = [];
+    let syncRunsCache = [];
+    let categoryRowsCache = [];
+    let monthlyRowsCache = [];
+    let categoryView = "bar";
+    let monthlyOrder = "january";
+    const animatedNumberValues = new Map();
+    const pageSize = 8;
+    const tablePages = {
+      latest: 0,
+      recurring: 0,
+      statements: 0,
+      syncBalances: 0,
+      syncTransactions: 0,
+      syncRuns: 0
+    };
+    const tableSorts = {
+      latest: {field: "transaction_date", direction: "desc", type: "date"},
+      accounts: {field: "name", direction: "asc", type: "text"},
+      syncBalances: {field: "captured_at", direction: "desc", type: "date"}
+    };
+    const sortableTables = {
+      latest: {
+        transaction_date: "date",
+        account_name: "text",
+        description: "text",
+        category: "text",
+        amount: "number"
+      },
+      accounts: {
+        name: "text",
+        transactions: "number",
+        expenses: "number",
+        income: "number",
+        latest: "date"
+      },
+      syncBalances: {
+        account_name: "text",
+        account_type: "text",
+        captured_at: "date",
+        source: "text",
+        amount: "number"
+      }
+    };
+
+    const money = value => value === null || value === undefined
+      ? "-"
+      : Number(value).toLocaleString(undefined, {style: "currency", currency: "USD"});
+
+    function animatedMoney(value, key) {
+      const numeric = Number(value || 0);
+      return `<span class="animated-number" data-count-format="money" data-count-key="${html(key)}" data-count-to="${numeric}">${money(numeric)}</span>`;
+    }
+
+    function animatedInteger(value, key) {
+      const numeric = Number(value || 0);
+      return `<span class="animated-number" data-count-format="integer" data-count-key="${html(key)}" data-count-to="${numeric}">${Math.round(numeric).toLocaleString()}</span>`;
+    }
+
+    function formatAnimatedNumber(value, format) {
+      if (format === "integer") return Math.round(value).toLocaleString();
+      return money(value);
+    }
+
+    function animateNumbers(scope = document) {
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      scope.querySelectorAll("[data-count-to]").forEach(node => {
+        const key = node.dataset.countKey || "";
+        const format = node.dataset.countFormat || "money";
+        const target = Number(node.dataset.countTo || 0);
+        const start = animatedNumberValues.has(key) ? Number(animatedNumberValues.get(key)) : target;
+        animatedNumberValues.set(key, target);
+        if (reduceMotion || Math.abs(start - target) < 0.005) {
+          node.textContent = formatAnimatedNumber(target, format);
+          return;
+        }
+        node.classList.add("counting");
+        const started = performance.now();
+        const duration = 360;
+        const step = now => {
+          const progress = Math.min(1, (now - started) / duration);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          node.textContent = formatAnimatedNumber(start + (target - start) * eased, format);
+          if (progress < 1) {
+            requestAnimationFrame(step);
+          } else {
+            node.textContent = formatAnimatedNumber(target, format);
+            node.classList.remove("counting");
+          }
+        };
+        requestAnimationFrame(step);
+      });
+    }
+
+    function animateBars(scope = document) {
+      const bars = Array.from(scope.querySelectorAll("[data-bar-target]"));
+      if (!bars.length) return;
+      bars.forEach(bar => {
+        bar.style.width = "0%";
+      });
+      requestAnimationFrame(() => {
+        bars.forEach(bar => {
+          bar.style.width = `${Number(bar.dataset.barTarget || 0)}%`;
+        });
+      });
+    }
+
+    function animateDashboard(scope = document) {
+      animateBars(scope);
+      animateNumbers(scope);
+    }
+
+    const html = value => String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("'", "&#039;");
+
+    function fmtDate(value) {
+      if (!value) return "";
+      const parsed = new Date(value.length === 10 ? `${value}T12:00:00` : value);
+      return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString(undefined, {month: "short", day: "numeric", year: "numeric"});
+    }
+
+    function applyNightMode(enabled) {
+      document.body.classList.toggle("night", Boolean(Number(enabled || 0)));
+    }
+
+    function fmtMonth(value) {
+      const parsed = new Date(`${value}-02T12:00:00`);
+      return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString(undefined, {month: "short", year: "2-digit"});
+    }
+
+    async function json(url, options) {
+      const response = await fetch(url, options);
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message || "Request failed.");
+      return payload;
+    }
+
+    function citiCodeInputValue(input) {
+      return input.value.replace(/\D/g, "").slice(0, 6);
+    }
+
+    function verificationCodeInputValue(input) {
+      return input.value.replace(/\D/g, "").slice(0, 6);
+    }
+
+    function setCitiCodeMessages(text, className = "muted") {
+      ["citiCodeMessage", "citiInlineCodeMessage"].forEach(id => {
+        const node = document.getElementById(id);
+        node.className = className;
+        node.textContent = text;
+      });
+    }
+
+    function setVanguardCodeMessages(text, className = "muted") {
+      ["vanguardCodeMessage", "vanguardInlineCodeMessage"].forEach(id => {
+        const node = document.getElementById(id);
+        node.className = className;
+        node.textContent = text;
+      });
+    }
+
+    function updateCitiCodeControls() {
+      const dialogInput = document.getElementById("citiCodeInput");
+      const inlineInput = document.getElementById("citiInlineCodeInput");
+      const dialogCode = verificationCodeInputValue(dialogInput);
+      const inlineCode = verificationCodeInputValue(inlineInput);
+      dialogInput.value = dialogCode;
+      inlineInput.value = inlineCode;
+      dialogInput.disabled = citiCodeVerifying;
+      inlineInput.disabled = citiCodeVerifying;
+      document.getElementById("closeCitiCode").disabled = citiCodeVerifying;
+      document.getElementById("submitCitiCode").disabled = citiCodeVerifying || dialogCode.length !== 6;
+      document.getElementById("submitCitiInlineCode").disabled = citiCodeVerifying || inlineCode.length !== 6;
+    }
+
+    function updateVanguardCodeControls() {
+      const dialogInput = document.getElementById("vanguardCodeInput");
+      const inlineInput = document.getElementById("vanguardInlineCodeInput");
+      const dialogCode = verificationCodeInputValue(dialogInput);
+      const inlineCode = verificationCodeInputValue(inlineInput);
+      dialogInput.value = dialogCode;
+      inlineInput.value = inlineCode;
+      dialogInput.disabled = vanguardCodeVerifying;
+      inlineInput.disabled = vanguardCodeVerifying;
+      document.getElementById("closeVanguardCode").disabled = vanguardCodeVerifying;
+      document.getElementById("submitVanguardCode").disabled = vanguardCodeVerifying || dialogCode.length !== 6;
+      document.getElementById("submitVanguardInlineCode").disabled = vanguardCodeVerifying || inlineCode.length !== 6;
+    }
+
+    function clearCitiCodeInputs() {
+      document.getElementById("citiCodeInput").value = "";
+      document.getElementById("citiInlineCodeInput").value = "";
+      updateCitiCodeControls();
+    }
+
+    function clearVanguardCodeInputs() {
+      document.getElementById("vanguardCodeInput").value = "";
+      document.getElementById("vanguardInlineCodeInput").value = "";
+      updateVanguardCodeControls();
+    }
+
+    function renderInstitutionFilter(summary) {
+      const select = document.getElementById("institutionFilter");
+      const institutions = summary.institutions || [];
+      const selected = summary.selected_institution || currentInstitution || "all";
+      select.innerHTML = [
+        `<option value="all">All institutions</option>`,
+        ...institutions.map(row => `<option value="${html(row.site)}">${html(row.name)}</option>`)
+      ].join("");
+      select.value = selected;
+      currentInstitution = selected;
+    }
+
+    function metricMonthRows(rows, field) {
+      return rows.filter(row => Number(row[field] || 0) > 0).map(row => `
+        <tr>
+          <td>${fmtMonth(row.month)}</td>
+          <td class="amount">${money(row[field])}</td>
+        </tr>
+      `).join("");
+    }
+
+    function pagerHtml(key, rows, columns, emptyText, pageSize = 8) {
+      detailPagers[key] = {rows, columns, emptyText, pageSize, page: 0};
+      const needsPager = rows.length > pageSize;
+      return `
+        <table class="mini-table">
+          <thead><tr>${columns.map(column => `<th>${html(column.label)}</th>`).join("")}</tr></thead>
+          <tbody data-pager-body="${html(key)}"></tbody>
+        </table>
+        <div class="pager ${needsPager ? "" : "hidden"}" data-pager-controls="${html(key)}">
+          <button type="button" data-pager-prev="${html(key)}">Prev</button>
+          <span class="muted" data-pager-label="${html(key)}"></span>
+          <button type="button" data-pager-next="${html(key)}">Next</button>
+        </div>
+      `;
+    }
+
+    function renderPager(key) {
+      const pager = detailPagers[key];
+      if (!pager) return;
+      const body = document.querySelector(`[data-pager-body="${CSS.escape(key)}"]`);
+      const label = document.querySelector(`[data-pager-label="${CSS.escape(key)}"]`);
+      const prev = document.querySelector(`[data-pager-prev="${CSS.escape(key)}"]`);
+      const next = document.querySelector(`[data-pager-next="${CSS.escape(key)}"]`);
+      if (!body) return;
+      const totalPages = Math.max(1, Math.ceil(pager.rows.length / pager.pageSize));
+      pager.page = Math.max(0, Math.min(pager.page, totalPages - 1));
+      const start = pager.page * pager.pageSize;
+      const rows = pager.rows.slice(start, start + pager.pageSize);
+      body.innerHTML = rows.length ? rows.map(row => `
+        <tr>${pager.columns.map(column => `<td${column.className ? ` class="${column.className}"` : ""}>${column.cell(row)}</td>`).join("")}</tr>
+      `).join("") : `<tr><td colspan="${pager.columns.length}">${html(pager.emptyText)}</td></tr>`;
+      if (label) label.textContent = pager.rows.length ? `Page ${pager.page + 1} of ${totalPages} (${pager.rows.length} rows)` : "No rows";
+      if (prev) prev.disabled = pager.page === 0 || pager.rows.length === 0;
+      if (next) next.disabled = pager.page >= totalPages - 1 || pager.rows.length === 0;
+    }
+
+    function bindPagers(scope = document) {
+      scope.querySelectorAll("[data-pager-prev]").forEach(button => {
+        button.addEventListener("click", () => {
+          const pager = detailPagers[button.dataset.pagerPrev];
+          if (!pager) return;
+          pager.page -= 1;
+          renderPager(button.dataset.pagerPrev);
+        });
+      });
+      scope.querySelectorAll("[data-pager-next]").forEach(button => {
+        button.addEventListener("click", () => {
+          const pager = detailPagers[button.dataset.pagerNext];
+          if (!pager) return;
+          pager.page += 1;
+          renderPager(button.dataset.pagerNext);
+        });
+      });
+      Object.keys(detailPagers).forEach(renderPager);
+    }
+
+    function tablePageRows(rows, key) {
+      const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+      tablePages[key] = Math.max(0, Math.min(tablePages[key] || 0, totalPages - 1));
+      const page = tablePages[key] || 0;
+      return rows.slice(page * pageSize, page * pageSize + pageSize);
+    }
+
+    function renderTablePager(key, rows, renderRows) {
+      const target = document.getElementById(`${key}Pager`);
+      if (!target) return;
+      const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+      tablePages[key] = Math.max(0, Math.min(tablePages[key] || 0, totalPages - 1));
+      if (rows.length <= pageSize) {
+        target.innerHTML = "";
+        return;
+      }
+      target.innerHTML = `
+        <button type="button" data-table-page="${key}" data-page-delta="-1">Prev</button>
+        <span class="muted">Page ${tablePages[key] + 1} of ${totalPages} (${rows.length} rows)</span>
+        <button type="button" data-table-page="${key}" data-page-delta="1">Next</button>
+      `;
+      target.querySelectorAll("[data-table-page]").forEach(button => {
+        button.addEventListener("click", () => {
+          tablePages[key] = Math.max(0, Math.min((tablePages[key] || 0) + Number(button.dataset.pageDelta || 0), totalPages - 1));
+          renderRows();
+        });
+      });
+      const buttons = target.querySelectorAll("button");
+      if (buttons[0]) buttons[0].disabled = tablePages[key] === 0;
+      if (buttons[1]) buttons[1].disabled = tablePages[key] >= totalPages - 1;
+    }
+
+    function sortedRows(rows, tableKey) {
+      const sort = tableSorts[tableKey];
+      if (!sort) return [...rows];
+      const direction = sort.direction === "asc" ? 1 : -1;
+      return [...rows].sort((left, right) => compareValues(left[sort.field], right[sort.field], sort.type) * direction);
+    }
+
+    function compareValues(left, right, type) {
+      if (type === "number") {
+        return Number(left || 0) - Number(right || 0);
+      }
+      if (type === "date") {
+        return dateValue(left) - dateValue(right);
+      }
+      return String(left ?? "").localeCompare(String(right ?? ""), undefined, {numeric: true, sensitivity: "base"});
+    }
+
+    function dateValue(value) {
+      if (!value) return 0;
+      const parsed = new Date(String(value).length === 10 ? `${value}T12:00:00` : value);
+      return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+    }
+
+    function updateSortButtons() {
+      document.querySelectorAll("[data-sort-table]").forEach(button => {
+        const sort = tableSorts[button.dataset.sortTable];
+        const active = sort && sort.field === button.dataset.sortField;
+        button.dataset.direction = active ? sort.direction : "";
+      });
+    }
+
+    function bindSortButtons() {
+      document.querySelectorAll("[data-sort-table]").forEach(button => {
+        button.addEventListener("click", () => {
+          const table = button.dataset.sortTable;
+          const field = button.dataset.sortField;
+          const type = sortableTables[table]?.[field] || "text";
+          const current = tableSorts[table];
+          tableSorts[table] = {
+            field,
+            type,
+            direction: current && current.field === field && current.direction === "desc" ? "asc" : "desc"
+          };
+          if (tablePages[table] !== undefined) tablePages[table] = 0;
+          updateSortButtons();
+          if (table === "latest") renderLatestRows();
+          if (table === "accounts") renderAccountsRows();
+          if (table === "syncBalances") renderSyncBalanceRows();
+        });
+      });
+      updateSortButtons();
+    }
+
+    function renderMetricDetails(key, summary) {
+      const rows = summary.monthly || [];
+      const totals = summary.totals || {};
+      const detail = summary.metric_details || {};
+      if (key === "expenses") {
+        const body = metricMonthRows(rows, "expenses");
+        const expenseRows = detail.expenses_transactions || [];
+        return `
+          <p class="muted">Median of monthly expense totals in the selected time range.</p>
+          <table class="mini-table">
+            <thead><tr><th>Month</th><th>Expenses</th></tr></thead>
+            <tbody>${body || "<tr><td colspan=\"2\">No expense months in this range.</td></tr>"}</tbody>
+          </table>
+          ${pagerHtml("metric-expenses-transactions", expenseRows, [
+            {label: "Date", cell: row => fmtDate(row.transaction_date)},
+            {label: "Account", cell: row => html(row.account_name)},
+            {label: "Description", cell: row => html(row.description)},
+            {label: "Category", cell: row => `<span class="pill">${html(row.category)}</span>`},
+            {label: "Amount", className: "amount negative", cell: row => money(row.amount)}
+          ], "No expense transactions in this range.")}
+        `;
+      }
+      if (key === "income") {
+        const types = detail.income_types || [];
+        const body = types.map(row => `
+          <tr>
+            <td>${html(row.type)} <span class="pill">${row.count}x</span></td>
+            <td class="amount positive">${money(row.total)}</td>
+          </tr>
+        `).join("");
+        const transactions = types.flatMap(row => (row.transactions || []).map(tx => ({...tx, type: row.type})))
+          .sort((a, b) => String(b.transaction_date).localeCompare(String(a.transaction_date)))
+        return `
+          <p class="muted">Median income uses positive income transactions, split by payroll and outside contributions.</p>
+          <table class="mini-table">
+            <thead><tr><th>Type</th><th>Total</th></tr></thead>
+            <tbody>${body || "<tr><td colspan=\"2\">No income in this range.</td></tr>"}</tbody>
+          </table>
+          ${pagerHtml("metric-income-transactions", transactions, [
+            {label: "Date", cell: row => fmtDate(row.transaction_date)},
+            {label: "Type", cell: row => html(row.type)},
+            {label: "Description", cell: row => html(row.description)},
+            {label: "Amount", className: "amount positive", cell: row => money(row.amount)}
+          ], "No income transactions in this range.")}
+        `;
+      }
+      if (key === "bills") {
+        const body = metricMonthRows(rows, "bills");
+        const billRows = detail.bills_transactions || [];
+        return `
+          <p class="muted">Average of monthly Bills & Utilities and Subscriptions totals.</p>
+          <table class="mini-table">
+            <thead><tr><th>Month</th><th>Bills</th></tr></thead>
+            <tbody>${body || "<tr><td colspan=\"2\">No bill months in this range.</td></tr>"}</tbody>
+          </table>
+          ${pagerHtml("metric-bills-transactions", billRows, [
+            {label: "Date", cell: row => fmtDate(row.transaction_date)},
+            {label: "Account", cell: row => html(row.account_name)},
+            {label: "Description", cell: row => html(row.description)},
+            {label: "Category", cell: row => `<span class="pill">${html(row.category)}</span>`},
+            {label: "Amount", className: "amount negative", cell: row => money(row.amount)}
+          ], "No bill transactions in this range.")}
+        `;
+      }
+      return `
+        <p class="muted">Projected net uses median income minus median expenses.</p>
+        <table class="mini-table">
+          <tbody>
+            <tr><td>Median income</td><td class="amount positive">${money(totals.median_monthly_income || 0)}</td></tr>
+            <tr><td>Median expenses</td><td class="amount negative">${money(totals.median_monthly_expenses || 0)}</td></tr>
+            <tr><td>Projected net</td><td class="amount ${Number(totals.projected_monthly_net || 0) >= 0 ? "positive" : "negative"}">${money(totals.projected_monthly_net || 0)}</td></tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    function bindDetailToggles(scope = document) {
+      scope.querySelectorAll("[data-detail-toggle]").forEach(button => {
+        button.addEventListener("click", () => {
+          const target = document.getElementById(button.dataset.detailToggle);
+          if (!target) return;
+          const nextHidden = !target.classList.contains("hidden");
+          target.classList.toggle("hidden", nextHidden);
+          button.setAttribute("aria-expanded", String(!nextHidden));
+          button.title = nextHidden ? "Show calculation details" : "Hide calculation details";
+          button.setAttribute("aria-label", button.title);
+        });
+      });
+    }
+
+    function renderMetrics(summary) {
+      detailPagers = {};
+      const totals = summary.totals || {};
+      const metrics = [
+        ["expenses", "Median Expenses", totals.median_monthly_expenses, "expense", "per month"],
+        ["income", "Median Income", totals.median_monthly_income, "income", "per month"],
+        ["bills", "Average Bills", totals.average_monthly_bills, "bill", "per month"],
+        ["projected", "Projected Net", totals.projected_monthly_net, "net", "median income minus expenses"]
+      ];
+      const target = document.getElementById("metrics");
+      target.innerHTML = metrics.map(([key, label, value, tone, note]) => {
+        const detailId = `metricDetail-${key}`;
+        return `
+        <article class="metric ${tone}">
+          <h3>${html(label)}</h3>
+          <strong>${animatedMoney(value || 0, `metric-${key}`)}</strong>
+          <span class="muted">${html(note)}</span>
+          <button class="detail-toggle" type="button" data-detail-toggle="${detailId}" aria-expanded="false" title="Show calculation details" aria-label="Show calculation details">i</button>
+          <div id="${detailId}" class="metric-details hidden">${renderMetricDetails(key, summary)}</div>
+        </article>
+      `;
+      }).join("");
+      bindDetailToggles(target);
+      bindPagers(target);
+      animateDashboard(target);
+    }
+
+    function renderRange(summary) {
+      const range = summary.date_range;
+      const totals = summary.totals || {};
+      if (!range) {
+        document.getElementById("range").textContent = "No transactions imported yet.";
+        return;
+      }
+      const periodLabel = currentPeriod === "all" ? "All time" : document.getElementById("periodFilter").selectedOptions[0].textContent;
+      document.getElementById("range").textContent =
+        `${periodLabel}: ${fmtDate(range.start)} to ${fmtDate(range.end)} - ${totals.transactions} transactions.`;
+    }
+
+    function renderMonthly(summary) {
+      monthlyRowsCache = summary.monthly || [];
+      renderMonthlyRows();
+    }
+
+    function renderMonthlyRows() {
+      const orderedRows = monthlyRowsCache.slice(-14);
+      const rows = monthlyOrder === "current" ? orderedRows.reverse() : orderedRows;
+      const max = Math.max(1, ...rows.flatMap(row => [row.income, row.expenses, row.bills]));
+      const target = document.getElementById("monthly");
+      document.getElementById("monthlyCurrentFirstButton").classList.toggle("active", monthlyOrder === "current");
+      document.getElementById("monthlyJanuaryFirstButton").classList.toggle("active", monthlyOrder === "january");
+      target.innerHTML = rows.length ? rows.map(row => `
+        <div class="row-chart">
+          <button class="month-button" type="button" data-month="${html(row.month)}">
+            <strong>${fmtMonth(row.month)}</strong>
+            <div class="track" title="${html(fmtDate(row.period_start))} to ${html(fmtDate(row.period_end))}">
+              <div class="bar income" data-bar-target="${Math.max(2, row.income / max * 100)}"></div>
+              <div class="bar expense" data-bar-target="${Math.max(2, row.expenses / max * 100)}"></div>
+              <div class="bar bill" data-bar-target="${Math.max(2, row.bills / max * 100)}"></div>
+            </div>
+            <span class="amount ${row.net >= 0 ? "positive" : "negative"}">${animatedMoney(row.net, `month-net-${row.month}`)}</span>
+          </button>
+        </div>
+      `).join("") : "<p class=\"muted\">Import statements to populate monthly flow.</p>";
+      document.querySelectorAll("[data-month]").forEach(button => {
+        button.addEventListener("click", () => openMonth(button.dataset.month));
+      });
+      animateDashboard(target);
+    }
+
+    function renderCategories(summary) {
+      categoryRowsCache = summary.categories || [];
+      renderCategoryView();
+    }
+
+    function renderCategoryView() {
+      const rows = categoryRowsCache;
+      document.getElementById("categoryBarButton").classList.toggle("active", categoryView === "bar");
+      document.getElementById("categoryPieButton").classList.toggle("active", categoryView === "pie");
+      if (!rows.length) {
+        document.getElementById("categories").innerHTML = "<p class=\"muted\">No categorized expenses yet.</p>";
+        return;
+      }
+      if (categoryView === "pie") {
+        renderCategoryPie(rows);
+        return;
+      }
+      const max = Math.max(1, ...rows.map(row => row.amount));
+      document.getElementById("categories").innerHTML = rows.length ? rows.map(row => `
+        <div class="row-chart category-row">
+          <strong>${html(row.category)}</strong>
+          <div class="track"><div class="bar expense" data-bar-target="${Math.max(2, row.amount / max * 100)}"></div></div>
+          <span class="amount">${animatedMoney(row.amount, `category-${row.category}`)}</span>
+        </div>
+      `).join("") : "<p class=\"muted\">No categorized expenses yet.</p>";
+      animateDashboard(document.getElementById("categories"));
+    }
+
+    function renderCategoryPie(rows) {
+      const colors = ["#c84e42", "#2f7f63", "#3c6ea8", "#c29a3e", "#8b6fc8", "#d06a8a", "#4d8f93", "#b75d3b", "#5f7fbd", "#a77a2b", "#7a8792", "#6f9f60"];
+      const total = rows.reduce((sum, row) => sum + Number(row.amount || 0), 0) || 1;
+      let cursor = 0;
+      const slices = rows.map((row, index) => {
+        const start = cursor;
+        cursor += Number(row.amount || 0) / total * 100;
+        return `${colors[index % colors.length]} ${start.toFixed(3)}% ${cursor.toFixed(3)}%`;
+      }).join(", ");
+      const legend = rows.map((row, index) => `
+        <div class="legend-row">
+          <span class="swatch" style="background:${colors[index % colors.length]}"></span>
+          <strong>${html(row.category)}</strong>
+          <span class="amount">${animatedMoney(row.amount, `category-${row.category}`)}</span>
+        </div>
+      `).join("");
+      document.getElementById("categories").innerHTML = `
+        <div class="pie-layout">
+          <div class="pie-chart chart-animate" role="img" aria-label="Spending by category pie chart" style="background: conic-gradient(${slices})"></div>
+          <div class="pie-legend">${legend}</div>
+        </div>
+      `;
+      animateNumbers(document.getElementById("categories"));
+    }
+
+    function renderNetWorth(summary) {
+      const netWorth = summary.net_worth || {};
+      const entries = netWorth.entries || [];
+      const rows = entries.map(entry => `
+        <tr>
+          <td>${html(entry.name)}</td>
+          <td>${html(netWorthCategoryLabel(entry.net_worth_category))}</td>
+          <td>${html(entry.account_type)}</td>
+          <td>${html(entry.source)}<br><span class="muted">${html(entry.source_detail || "")}</span></td>
+          <td>${html(fmtDate(entry.as_of))}</td>
+          <td class="amount ${entry.balance_type === "asset" ? "positive" : "negative"}">${money(entry.amount)}</td>
+        </tr>
+      `).join("");
+      document.getElementById("netWorth").innerHTML = `
+        <div class="net-worth-wrap">
+        <button class="detail-toggle" type="button" data-detail-toggle="netWorthDetails" aria-expanded="false" title="Show net worth details" aria-label="Show net worth details">i</button>
+        <div class="net-worth-grid">
+          <div>
+            <h3>Assets</h3>
+            <div class="net-worth-total positive">${animatedMoney(netWorth.assets || 0, "net-worth-assets")}</div>
+          </div>
+          <div>
+            <h3>Rewards</h3>
+            <div class="net-worth-total positive">${animatedMoney(netWorth.rewards || 0, "net-worth-rewards")}</div>
+          </div>
+          <div>
+            <h3>Investments</h3>
+            <div class="net-worth-total positive">${animatedMoney(netWorth.investments || 0, "net-worth-investments")}</div>
+          </div>
+          <div>
+            <h3>Liabilities</h3>
+            <div class="net-worth-total negative">${animatedMoney(netWorth.liabilities || 0, "net-worth-liabilities")}</div>
+          </div>
+          <div>
+            <h3>Net Worth</h3>
+            <div class="net-worth-total ${Number(netWorth.net_worth || 0) >= 0 ? "positive" : "negative"}">${animatedMoney(netWorth.net_worth || 0, "net-worth-total")}</div>
+          </div>
+        </div>
+        </div>
+        <div id="netWorthDetails" class="metric-details hidden">
+          <p class="muted">Net Worth is assets, rewards, and investments minus liabilities. Retirement accounts are grouped with investments.</p>
+          <table>
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th>Source</th>
+              <th>As of</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>${rows || "<tr><td colspan=\"6\">No balances detected yet.</td></tr>"}</tbody>
+          </table>
+        </div>
+      `;
+      bindDetailToggles(document.getElementById("netWorth"));
+      animateDashboard(document.getElementById("netWorth"));
+    }
+
+    function netWorthCategoryLabel(category) {
+      if (category === "rewards") return "Rewards";
+      if (category === "investment") return "Investments";
+      if (category === "liability") return "Liabilities";
+      return "Assets";
+    }
+
+    function renderLatest(summary) {
+      latestRowsCache = summary.latest || [];
+      tablePages.latest = 0;
+      renderLatestRows();
+    }
+
+    function renderLatestRows() {
+      const sorted = sortedRows(latestRowsCache, "latest");
+      const rows = tablePageRows(sorted, "latest");
+      document.getElementById("latest").innerHTML = rows.length ? rows.map(row => `
+        <tr>
+          <td>${fmtDate(row.transaction_date)}</td>
+          <td>${html(row.account_name)}</td>
+          <td>${html(row.description)}</td>
+          <td><span class="pill">${html(row.category)}</span></td>
+          <td class="amount ${row.amount >= 0 ? "positive" : "negative"}">${money(row.amount)}</td>
+        </tr>
+      `).join("") : "<tr><td colspan=\"5\">No transactions imported yet.</td></tr>";
+      renderTablePager("latest", sorted, renderLatestRows);
+    }
+
+    function renderRecurring(summary) {
+      recurringRowsCache = summary.recurring || [];
+      tablePages.recurring = 0;
+      renderRecurringRows(summary.recurring_definition || {});
+    }
+
+    function renderRecurringRows(definition = {}) {
+      const rows = tablePageRows(recurringRowsCache, "recurring");
+      const note = `Rule: shown at least ${definition.min_occurrences || 2} times in the selected institution and time window.`;
+      const tbody = document.getElementById("recurring");
+      tbody.innerHTML = rows.length ? rows.map((row, pageIndex) => {
+        const index = (tablePages.recurring || 0) * pageSize + pageIndex;
+        const details = (row.transactions || []).map(transaction => `
+          <tr>
+            <td>${fmtDate(transaction.transaction_date)}</td>
+            <td>${html(transaction.account_name || "")}</td>
+            <td>${html(transaction.description || "")}</td>
+            <td><span class="pill">${html(transaction.category || "")}</span></td>
+            <td class="amount ${transaction.amount >= 0 ? "positive" : "negative"}">${money(transaction.amount)}</td>
+          </tr>
+        `).join("");
+        return `
+          <tr>
+            <td>
+              <button class="recurring-button" type="button" data-recurring-toggle="${index}" aria-expanded="false">
+                ${html(row.name)}
+              </button>
+            </td>
+            <td><span class="pill">${row.count}x</span></td>
+            <td>${fmtDate(row.latest_date)}</td>
+            <td class="amount ${row.total >= 0 ? "positive" : "negative"}">${money(row.total)}</td>
+          </tr>
+          <tr id="recurringDetail${index}" class="recurring-details hidden">
+            <td colspan="4">
+              <table class="mini-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Account</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>${details || "<tr><td colspan=\"5\">No transactions found.</td></tr>"}</tbody>
+              </table>
+            </td>
+          </tr>
+        `;
+      }).join("") + `<tr><td colspan="4" class="muted">${html(note)}</td></tr>` : `<tr><td colspan="4">No repeated transactions yet.</td></tr><tr><td colspan="4" class="muted">${html(note)}</td></tr>`;
+      tbody.querySelectorAll("[data-recurring-toggle]").forEach(button => {
+        button.addEventListener("click", () => {
+          const detail = document.getElementById(`recurringDetail${button.dataset.recurringToggle}`);
+          if (!detail) return;
+          const expanded = detail.classList.toggle("hidden") === false;
+          button.setAttribute("aria-expanded", String(expanded));
+        });
+      });
+      renderTablePager("recurring", recurringRowsCache, () => renderRecurringRows(definition));
+    }
+
+    function renderAccounts(summary) {
+      accountRowsCache = summary.accounts || [];
+      renderAccountsRows();
+    }
+
+    function renderAccountsRows() {
+      const rows = sortedRows(accountRowsCache, "accounts");
+      document.getElementById("accounts").innerHTML = rows.length ? rows.map(row => `
+        <tr>
+          <td>${html(row.name)}</td>
+          <td>${row.transactions}</td>
+          <td class="amount negative">${money(row.expenses)}</td>
+          <td class="amount positive">${money(row.income)}</td>
+          <td>${fmtDate(row.latest)}</td>
+        </tr>
+      `).join("") : "<tr><td colspan=\"5\">No accounts imported yet.</td></tr>";
+    }
+
+    function renderStatements(summary) {
+      statementRowsCache = summary.statements || [];
+      tablePages.statements = 0;
+      renderStatementRows();
+    }
+
+    function renderStatementRows() {
+      const rows = tablePageRows(statementRowsCache, "statements");
+      document.getElementById("statements").innerHTML = rows.length ? rows.map(row => `
+        <tr>
+          <td>${fmtDate(row.period_end)}</td>
+          <td class="amount">${money(row.ending_balance)}</td>
+          <td>${html(row.file_name)}</td>
+        </tr>
+      `).join("") : "<tr><td colspan=\"3\">No statements imported yet.</td></tr>";
+      renderTablePager("statements", statementRowsCache, renderStatementRows);
+    }
+
+    function render(summary) {
+      renderInstitutionFilter(summary);
+      renderRange(summary);
+      renderMetrics(summary);
+      renderNetWorth(summary);
+      renderMonthly(summary);
+      renderCategories(summary);
+      renderLatest(summary);
+      renderRecurring(summary);
+      renderAccounts(summary);
+      renderStatements(summary);
+    }
+
+    async function refresh() {
+      currentInstitution = document.getElementById("institutionFilter").value || currentInstitution || "all";
+      currentPeriod = document.getElementById("periodFilter").value || currentPeriod || "ytd";
+      render(await json(`/api/summary?institution=${encodeURIComponent(currentInstitution)}&period=${encodeURIComponent(currentPeriod)}`));
+    }
+
+    async function importStatements() {
+      const button = document.getElementById("importButton");
+      const message = document.getElementById("message");
+      button.disabled = true;
+      message.className = "muted";
+      message.textContent = "Importing...";
+      try {
+        const stats = await json("/api/import", {method: "POST"});
+        message.className = stats.errors.length ? "error" : "muted";
+        message.textContent = `${stats.transactions_inserted} new transactions, ${stats.statements_inserted} new statements`;
+        await refresh();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function renderSettings(payload) {
+      settingsCache = payload;
+      const settings = payload.settings || {};
+      document.getElementById("recurringMin").value = settings.recurring_min_occurrences || 2;
+      document.getElementById("nightMode").value = String(settings.night_mode || 0);
+      applyNightMode(settings.night_mode || 0);
+      const tracked = [
+        ...(payload.built_in_folders || []),
+        ...(payload.folders || []).map(row => ({...row, source: "custom", file_count: ""}))
+      ];
+      document.getElementById("trackedFolderRows").innerHTML = tracked.length ? tracked.map(row => `
+        <tr>
+          <td>${html(row.folder_path)}</td>
+          <td>${html(row.account_name)}</td>
+          <td>${html(row.account_type)}</td>
+          <td>${html(row.file_count)}</td>
+        </tr>
+      `).join("") : "<tr><td colspan=\"4\">No tracked folders found.</td></tr>";
+      const rows = payload.folders || [];
+      document.getElementById("folderRows").innerHTML = rows.length ? rows.map(row => `
+        <tr>
+          <td>${html(row.folder_path)}</td>
+          <td>${html(row.account_name)}</td>
+          <td>${html(row.account_type)}</td>
+          <td><button class="danger" type="button" data-folder-delete="${row.id}">Remove</button></td>
+        </tr>
+      `).join("") : "<tr><td colspan=\"4\">No extra folders added yet.</td></tr>";
+      document.querySelectorAll("[data-folder-delete]").forEach(button => {
+        button.addEventListener("click", () => deleteFolder(button.dataset.folderDelete));
+      });
+      const manualAssets = payload.manual_assets || [];
+      document.getElementById("manualAssetRows").innerHTML = manualAssets.length ? manualAssets.map(row => `
+        <tr>
+          <td>${html(row.name)}</td>
+          <td>${html(row.institution || "")}</td>
+          <td>${html(row.asset_type)} <span class="pill">${html(row.balance_type)}</span></td>
+          <td class="amount ${row.balance_type === "asset" ? "positive" : "negative"}">${money(row.amount)}</td>
+          <td><button class="danger" type="button" data-asset-delete="${row.id}">Remove</button></td>
+        </tr>
+      `).join("") : "<tr><td colspan=\"5\">No manual assets added yet.</td></tr>";
+      document.querySelectorAll("[data-asset-delete]").forEach(button => {
+        button.addEventListener("click", () => deleteAsset(button.dataset.assetDelete));
+      });
+    }
+
+    async function loadSettings() {
+      renderSettings(await json("/api/settings"));
+    }
+
+    async function openSettings() {
+      await loadSettings();
+      document.getElementById("settingsDialog").showModal();
+    }
+
+    async function saveSettings() {
+      const message = document.getElementById("message");
+      try {
+        const payload = await json("/api/settings", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            recurring_min_occurrences: document.getElementById("recurringMin").value,
+            night_mode: document.getElementById("nightMode").value
+          })
+        });
+        renderSettings(payload);
+        message.className = "muted";
+        message.textContent = "Settings saved.";
+        await refresh();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+      }
+    }
+
+    async function addFolder() {
+      const message = document.getElementById("message");
+      try {
+        const payload = await json("/api/settings/folders", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            folder_path: document.getElementById("folderPath").value,
+            account_name: document.getElementById("folderAccountName").value,
+            account_type: document.getElementById("folderAccountType").value
+          })
+        });
+        document.getElementById("folderPath").value = "";
+        document.getElementById("folderAccountName").value = "";
+        renderSettings(payload);
+        message.className = "muted";
+        message.textContent = "Folder added. Importing...";
+        await importStatements();
+        await refresh();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+      }
+    }
+
+    async function deleteFolder(folderId) {
+      const payload = await json(`/api/settings/folders/${encodeURIComponent(folderId)}`, {method: "DELETE"});
+      renderSettings(payload);
+      await refresh();
+    }
+
+    async function addAsset() {
+      const message = document.getElementById("message");
+      try {
+        const payload = await json("/api/settings/assets", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            name: document.getElementById("assetName").value,
+            institution: document.getElementById("assetInstitution").value,
+            asset_type: document.getElementById("assetType").value,
+            balance_type: document.getElementById("assetBalanceType").value,
+            amount: document.getElementById("assetAmount").value
+          })
+        });
+        document.getElementById("assetName").value = "";
+        document.getElementById("assetInstitution").value = "";
+        document.getElementById("assetAmount").value = "";
+        renderSettings(payload);
+        message.className = "muted";
+        message.textContent = "Asset added.";
+        await refresh();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+      }
+    }
+
+    async function deleteAsset(assetId) {
+      const payload = await json(`/api/settings/assets/${encodeURIComponent(assetId)}`, {method: "DELETE"});
+      renderSettings(payload);
+      await refresh();
+    }
+
+    async function openMonth(month) {
+      const payload = await json(`/api/transactions?institution=${encodeURIComponent(currentInstitution)}&period=${encodeURIComponent(currentPeriod)}&month=${encodeURIComponent(month)}`);
+      const totals = payload.totals || {};
+      document.getElementById("monthTitle").textContent = `${fmtMonth(month)} Transactions`;
+      document.getElementById("monthSummary").textContent =
+        `Income ${money(totals.income)} - Expenses ${money(totals.expenses)} - Bills ${money(totals.bills)} - Net ${money(totals.net)}`;
+      const rows = payload.transactions || [];
+      document.getElementById("monthTransactions").innerHTML = rows.length ? rows.map(row => `
+        <tr>
+          <td>${fmtDate(row.transaction_date)}</td>
+          <td>${html(row.account_name)}</td>
+          <td>${html(row.description)}</td>
+          <td><span class="pill">${html(row.category)}</span></td>
+          <td class="amount ${row.amount >= 0 ? "positive" : "negative"}">${money(row.amount)}</td>
+        </tr>
+      `).join("") : "<tr><td colspan=\"5\">No transactions for this month.</td></tr>";
+      document.getElementById("monthDialog").showModal();
+    }
+
+    function setTab(tabId) {
+      currentTab = tabId;
+      document.querySelectorAll(".tab-button").forEach(button => {
+        button.classList.toggle("active", button.dataset.tabTarget === tabId);
+      });
+      document.querySelectorAll(".tab-view").forEach(view => {
+        view.classList.toggle("active", view.id === tabId);
+      });
+      if (tabId === "syncTab") {
+        loadSyncStatus();
+      }
+      if (tabId === "consoleTab") {
+        loadConsole();
+        if (!consolePollTimer) {
+          consolePollTimer = setInterval(loadConsole, 2500);
+        }
+      } else if (consolePollTimer) {
+        clearInterval(consolePollTimer);
+        consolePollTimer = null;
+      }
+    }
+
+    async function loadConsole() {
+      try {
+        const payload = await json("/api/console");
+        const consoleLog = document.getElementById("consoleLog");
+        consoleLog.textContent = payload.log || "No console output yet.";
+        document.getElementById("consoleMeta").textContent =
+          `${Number(payload.size || 0).toLocaleString()} bytes from ${payload.path || "dashboard console log"}`;
+        consoleLog.scrollTop = consoleLog.scrollHeight;
+      } catch (error) {
+        document.getElementById("consoleLog").textContent = error.message;
+        document.getElementById("consoleMeta").textContent = "Unable to load console output.";
+      }
+    }
+
+    function renderSyncBalanceRows() {
+      const sorted = sortedRows(syncBalancesCache, "syncBalances");
+      const rows = tablePageRows(sorted, "syncBalances");
+      document.getElementById("syncBalances").innerHTML = rows.length ? rows.map(row => `
+        <tr>
+          <td>${html(row.account_name)}</td>
+          <td>${html(row.account_type)} <span class="pill">${html(row.balance_type || "current")}</span></td>
+          <td>${fmtDate(row.captured_at)}</td>
+          <td>${html(row.source)}</td>
+          <td class="amount ${row.balance_type === "liability" ? "negative" : "positive"}">${money(row.amount)}</td>
+        </tr>
+      `).join("") : "<tr><td colspan=\"5\">No live balances captured yet.</td></tr>";
+      renderTablePager("syncBalances", sorted, renderSyncBalanceRows);
+    }
+
+    function renderSyncTransactionRows() {
+      const rows = tablePageRows(syncTransactionsCache, "syncTransactions");
+      document.getElementById("syncTransactions").innerHTML = rows.length ? rows.map(row => `
+        <tr>
+          <td>${fmtDate(row.transaction_date)}</td>
+          <td>${html(row.account_name)}</td>
+          <td>${html(row.description)}</td>
+          <td><span class="pill">${html(row.category)}</span></td>
+          <td class="amount ${row.amount >= 0 ? "positive" : "negative"}">${money(row.amount)}</td>
+        </tr>
+      `).join("") : "<tr><td colspan=\"5\">No live transactions captured yet.</td></tr>";
+      renderTablePager("syncTransactions", syncTransactionsCache, renderSyncTransactionRows);
+    }
+
+    function renderSyncRunRows() {
+      const rows = tablePageRows(syncRunsCache, "syncRuns");
+      document.getElementById("syncRuns").innerHTML = rows.length ? rows.map(row => `
+        <tr>
+          <td>${fmtDate(row.started_at)}</td>
+          <td>${fmtDate(row.finished_at)}</td>
+          <td><span class="pill">${html(row.status)}</span></td>
+          <td>${html(row.message || "")}</td>
+        </tr>
+      `).join("") : "<tr><td colspan=\"4\">No sync history yet.</td></tr>";
+      renderTablePager("syncRuns", syncRunsCache, renderSyncRunRows);
+    }
+
+    function renderSync(payload) {
+      const state = payload.state || {};
+      const balances = payload.balances || [];
+      const transactions = payload.transactions || [];
+      const runs = payload.runs || [];
+      syncBalancesCache = balances;
+      syncTransactionsCache = transactions;
+      syncRunsCache = runs;
+      const latestBalance = balances[0];
+      document.getElementById("syncStatusValue").textContent = String(state.status || "idle").replaceAll("_", " ");
+      document.getElementById("syncStatusTime").textContent = state.message || "No sync has run yet.";
+      document.getElementById("syncBalanceValue").innerHTML = latestBalance ? animatedMoney(latestBalance.amount, "sync-latest-balance") : "-";
+      document.getElementById("syncBalanceTime").textContent = latestBalance ? `${latestBalance.account_name || ""} - ${latestBalance.balance_type || latestBalance.account_type || ""} - captured ${fmtDate(latestBalance.captured_at)}` : "Waiting for online banking.";
+      document.getElementById("syncTransactionCount").innerHTML = animatedInteger(transactions.length, "sync-transaction-count");
+      document.getElementById("syncMessage").className = state.status === "failed" ? "error" : "muted";
+      document.getElementById("syncMessage").textContent = state.message || "Ready to sync latest transactions and live balances.";
+      renderSyncBalanceRows();
+      renderSyncTransactionRows();
+      renderSyncRunRows();
+      const running = Boolean(payload.running) || state.status === "running";
+      updateSyncSelectionControls(running);
+      const stateMessage = String(state.message || "");
+      const lowerStateMessage = stateMessage.toLowerCase();
+      const waitingForCitiCode = state.institution === "citi" && state.status === "waiting_for_user_action" && lowerStateMessage.includes("code");
+      const waitingForVanguardCode = state.institution === "vanguard" && state.status === "waiting_for_user_action" && lowerStateMessage.includes("code");
+      const citiCodeWrong = waitingForCitiCode && (lowerStateMessage.includes("wrong") || lowerStateMessage.includes("try again"));
+      const vanguardCodeWrong = waitingForVanguardCode && (lowerStateMessage.includes("wrong") || lowerStateMessage.includes("try again"));
+      const citiVerificationAccepted = citiCodeVerifying && !waitingForCitiCode && state.status === "running";
+      const vanguardVerificationAccepted = vanguardCodeVerifying && !waitingForVanguardCode && state.status === "running";
+      if (citiVerificationAccepted || (!waitingForCitiCode && state.status === "success")) {
+        citiCodeVerifying = false;
+        const dialog = document.getElementById("citiCodeDialog");
+        if (dialog.open) dialog.close();
+        clearCitiCodeInputs();
+      }
+      if (vanguardVerificationAccepted || (!waitingForVanguardCode && state.status === "success")) {
+        vanguardCodeVerifying = false;
+        const dialog = document.getElementById("vanguardCodeDialog");
+        if (dialog.open) dialog.close();
+        clearVanguardCodeInputs();
+      }
+      if (!waitingForCitiCode && state.status === "failed" && citiCodeVerifying) {
+        citiCodeVerifying = false;
+        setCitiCodeMessages("The code was wrong. Try again.", "error");
+      }
+      if (!waitingForVanguardCode && state.status === "failed" && vanguardCodeVerifying) {
+        vanguardCodeVerifying = false;
+        setVanguardCodeMessages("The code was wrong. Try again.", "error");
+      }
+      if (citiCodeWrong) {
+        citiCodeVerifying = false;
+      }
+      if (vanguardCodeWrong) {
+        vanguardCodeVerifying = false;
+      }
+      const citiPanel = document.getElementById("citiCodePanel");
+      citiPanel.classList.toggle("hidden", !waitingForCitiCode);
+      if (waitingForCitiCode) {
+        if (citiCodeWrong) {
+          setCitiCodeMessages("The code was wrong. Try again.", "error");
+        } else if (citiCodeVerifying) {
+          setCitiCodeMessages("Verifying...", "muted");
+        } else {
+          setCitiCodeMessages("Waiting for your Citi verification code.", "muted");
+        }
+      }
+      const vanguardPanel = document.getElementById("vanguardCodePanel");
+      vanguardPanel.classList.toggle("hidden", !waitingForVanguardCode);
+      if (waitingForVanguardCode) {
+        if (vanguardCodeWrong) {
+          setVanguardCodeMessages("The code was wrong. Try again.", "error");
+        } else if (vanguardCodeVerifying) {
+          setVanguardCodeMessages("Verifying...", "muted");
+        } else {
+          setVanguardCodeMessages("Waiting for your Vanguard verification code.", "muted");
+        }
+      }
+      const citiDialog = document.getElementById("citiCodeDialog");
+      if (waitingForCitiCode && !citiDialog.open) {
+        if (typeof citiDialog.showModal === "function") citiDialog.showModal();
+        else citiDialog.setAttribute("open", "");
+        document.getElementById("citiCodeInput").focus();
+      }
+      const vanguardDialog = document.getElementById("vanguardCodeDialog");
+      if (waitingForVanguardCode && !vanguardDialog.open) {
+        if (typeof vanguardDialog.showModal === "function") vanguardDialog.showModal();
+        else vanguardDialog.setAttribute("open", "");
+        document.getElementById("vanguardCodeInput").focus();
+      }
+      updateCitiCodeControls();
+      updateVanguardCodeControls();
+      animateDashboard(document.getElementById("syncTab"));
+      if (running && !syncPollTimer) {
+        syncPollTimer = setInterval(loadSyncStatus, 3500);
+      }
+      if (!running && syncPollTimer) {
+        clearInterval(syncPollTimer);
+        syncPollTimer = null;
+        refresh().catch(() => {});
+      }
+    }
+
+    async function loadSyncStatus() {
+      try {
+        renderSync(await json("/api/sync/status"));
+      } catch (error) {
+        document.getElementById("syncMessage").className = "error";
+        document.getElementById("syncMessage").textContent = error.message;
+      }
+    }
+
+    function selectedSyncInstitutions() {
+      return Array.from(document.querySelectorAll(".sync-institution-check:checked")).map(input => input.value);
+    }
+
+    function setSyncSelection(checked) {
+      document.querySelectorAll(".sync-institution-check").forEach(input => {
+        input.checked = checked;
+      });
+      updateSyncSelectionControls();
+    }
+
+    function updateSyncSelectionControls(running = false) {
+      const hasSelection = selectedSyncInstitutions().length > 0;
+      document.getElementById("syncSelectedButton").disabled = running || !hasSelection;
+      document.getElementById("openSelectedLoginBrowsers").disabled = running || !hasSelection;
+      document.querySelectorAll(".open-login-button").forEach(button => {
+        button.disabled = running;
+      });
+      document.querySelectorAll(".sync-institution-check").forEach(input => {
+        input.disabled = running;
+      });
+      document.getElementById("selectAllSyncInstitutions").disabled = running;
+      document.getElementById("clearSyncInstitutions").disabled = running;
+    }
+
+    async function openLoginBrowsers(institutions = selectedSyncInstitutions()) {
+      const message = document.getElementById("syncMessage");
+      if (!institutions.length) {
+        message.className = "error";
+        message.textContent = "Select at least one institution.";
+        return;
+      }
+      message.className = "muted";
+      message.textContent = "Opening login browser...";
+      try {
+        const payload = await json("/api/sync/setup", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({institutions})
+        });
+        message.textContent = payload.message || "Login browser opened.";
+        await loadSyncStatus();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+      }
+    }
+
+    async function syncSelectedInstitutions() {
+      const message = document.getElementById("syncMessage");
+      const institutions = selectedSyncInstitutions();
+      if (!institutions.length) {
+        message.className = "error";
+        message.textContent = "Select at least one institution.";
+        return;
+      }
+      updateSyncSelectionControls(true);
+      message.className = "muted";
+      message.textContent = "Starting selected syncs...";
+      try {
+        await json("/api/sync/run", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({institutions})
+        });
+        await loadSyncStatus();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+        updateSyncSelectionControls(false);
+      }
+    }
+
+    async function openCitizensBrowser() {
+      const message = document.getElementById("syncMessage");
+      message.className = "muted";
+      message.textContent = "Opening Citizens login browser...";
+      try {
+        const payload = await json("/api/sync/citizens/setup", {method: "POST"});
+        message.textContent = payload.message || "Citizens login browser opened.";
+        await loadSyncStatus();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+      }
+    }
+
+    async function syncCitizens() {
+      const message = document.getElementById("syncMessage");
+      const button = document.getElementById("syncCitizensButton");
+      button.disabled = true;
+      message.className = "muted";
+      message.textContent = "Starting Citizens sync...";
+      try {
+        await json("/api/sync/citizens/run", {method: "POST"});
+        await loadSyncStatus();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+        button.disabled = false;
+      }
+    }
+
+    async function openAmexBrowser() {
+      const message = document.getElementById("syncMessage");
+      message.className = "muted";
+      message.textContent = "Opening Amex login browser...";
+      try {
+        const payload = await json("/api/sync/amex/setup", {method: "POST"});
+        message.textContent = payload.message || "Amex login browser opened.";
+        await loadSyncStatus();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+      }
+    }
+
+    async function syncAmex() {
+      const message = document.getElementById("syncMessage");
+      const button = document.getElementById("syncAmexButton");
+      button.disabled = true;
+      message.className = "muted";
+      message.textContent = "Starting Amex sync...";
+      try {
+        await json("/api/sync/amex/run", {method: "POST"});
+        await loadSyncStatus();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+        button.disabled = false;
+      }
+    }
+
+    async function openChaseBrowser() {
+      const message = document.getElementById("syncMessage");
+      message.className = "muted";
+      message.textContent = "Opening Chase login browser...";
+      try {
+        const payload = await json("/api/sync/chase/setup", {method: "POST"});
+        message.textContent = payload.message || "Chase login browser opened.";
+        await loadSyncStatus();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+      }
+    }
+
+    async function syncChase() {
+      const message = document.getElementById("syncMessage");
+      const button = document.getElementById("syncChaseButton");
+      button.disabled = true;
+      message.className = "muted";
+      message.textContent = "Starting Chase sync...";
+      try {
+        await json("/api/sync/chase/run", {method: "POST"});
+        await loadSyncStatus();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+        button.disabled = false;
+      }
+    }
+
+    async function openCitiBrowser() {
+      const message = document.getElementById("syncMessage");
+      message.className = "muted";
+      message.textContent = "Opening Citi login browser...";
+      try {
+        const payload = await json("/api/sync/citi/setup", {method: "POST"});
+        message.textContent = payload.message || "Citi login browser opened.";
+        await loadSyncStatus();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+      }
+    }
+
+    async function syncCiti() {
+      const message = document.getElementById("syncMessage");
+      const button = document.getElementById("syncCitiButton");
+      button.disabled = true;
+      message.className = "muted";
+      message.textContent = "Starting Citi sync...";
+      try {
+        await json("/api/sync/citi/run", {method: "POST"});
+        await loadSyncStatus();
+      } catch (error) {
+        message.className = "error";
+        message.textContent = error.message;
+        button.disabled = false;
+      }
+    }
+
+    async function submitCitiCode(inputId = "citiCodeInput", messageId = "citiCodeMessage") {
+      const input = document.getElementById(inputId);
+      const code = citiCodeInputValue(input);
+      const message = document.getElementById(messageId);
+      input.value = code;
+      if (code.length !== 6) {
+        message.className = "error";
+        message.textContent = "Enter the full 6-digit Citi verification code.";
+        updateCitiCodeControls();
+        return;
+      }
+      citiCodeVerifying = true;
+      setCitiCodeMessages("Verifying...", "muted");
+      updateCitiCodeControls();
+      message.className = "muted";
+      message.textContent = "Verifying...";
+      try {
+        await json("/api/sync/citi/code", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({code})
+        });
+        await loadSyncStatus();
+      } catch (error) {
+        citiCodeVerifying = false;
+        message.className = "error";
+        message.textContent = error.message;
+        updateCitiCodeControls();
+      }
+    }
+
+    async function submitVanguardCode(inputId = "vanguardCodeInput", messageId = "vanguardCodeMessage") {
+      const input = document.getElementById(inputId);
+      const code = verificationCodeInputValue(input);
+      const message = document.getElementById(messageId);
+      input.value = code;
+      if (code.length !== 6) {
+        message.className = "error";
+        message.textContent = "Enter the full 6-digit Vanguard verification code.";
+        updateVanguardCodeControls();
+        return;
+      }
+      vanguardCodeVerifying = true;
+      setVanguardCodeMessages("Verifying...", "muted");
+      updateVanguardCodeControls();
+      message.className = "muted";
+      message.textContent = "Verifying...";
+      try {
+        await json("/api/sync/vanguard/code", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({code})
+        });
+        await loadSyncStatus();
+      } catch (error) {
+        vanguardCodeVerifying = false;
+        message.className = "error";
+        message.textContent = error.message;
+        updateVanguardCodeControls();
+      }
+    }
+
+    document.querySelectorAll("[data-tab-target]").forEach(button => {
+      button.addEventListener("click", () => setTab(button.dataset.tabTarget));
+    });
+    document.getElementById("refreshConsoleButton").addEventListener("click", loadConsole);
+    document.getElementById("syncSelectedButton").addEventListener("click", syncSelectedInstitutions);
+    document.getElementById("openSelectedLoginBrowsers").addEventListener("click", () => openLoginBrowsers());
+    document.getElementById("selectAllSyncInstitutions").addEventListener("click", () => setSyncSelection(true));
+    document.getElementById("clearSyncInstitutions").addEventListener("click", () => setSyncSelection(false));
+    document.querySelectorAll(".sync-institution-check").forEach(input => {
+      input.addEventListener("change", () => updateSyncSelectionControls(false));
+    });
+    document.querySelectorAll(".open-login-button").forEach(button => {
+      button.addEventListener("click", () => openLoginBrowsers([button.dataset.openInstitution]));
+    });
+    document.getElementById("submitCitiCode").addEventListener("click", () => submitCitiCode());
+    document.getElementById("submitCitiInlineCode").addEventListener("click", () => submitCitiCode("citiInlineCodeInput", "citiInlineCodeMessage"));
+    document.getElementById("submitVanguardCode").addEventListener("click", () => submitVanguardCode());
+    document.getElementById("submitVanguardInlineCode").addEventListener("click", () => submitVanguardCode("vanguardInlineCodeInput", "vanguardInlineCodeMessage"));
+    document.getElementById("closeCitiCode").addEventListener("click", () => {
+      if (!citiCodeVerifying) document.getElementById("citiCodeDialog").close();
+    });
+    document.getElementById("closeVanguardCode").addEventListener("click", () => {
+      if (!vanguardCodeVerifying) document.getElementById("vanguardCodeDialog").close();
+    });
+    document.getElementById("citiCodeInput").addEventListener("input", updateCitiCodeControls);
+    document.getElementById("citiInlineCodeInput").addEventListener("input", updateCitiCodeControls);
+    document.getElementById("vanguardCodeInput").addEventListener("input", updateVanguardCodeControls);
+    document.getElementById("vanguardInlineCodeInput").addEventListener("input", updateVanguardCodeControls);
+    document.getElementById("citiCodeInput").addEventListener("keydown", event => {
+      if (event.key === "Enter" && !document.getElementById("submitCitiCode").disabled) submitCitiCode();
+    });
+    document.getElementById("citiInlineCodeInput").addEventListener("keydown", event => {
+      if (event.key === "Enter" && !document.getElementById("submitCitiInlineCode").disabled) {
+        submitCitiCode("citiInlineCodeInput", "citiInlineCodeMessage");
+      }
+    });
+    document.getElementById("vanguardCodeInput").addEventListener("keydown", event => {
+      if (event.key === "Enter" && !document.getElementById("submitVanguardCode").disabled) submitVanguardCode();
+    });
+    document.getElementById("vanguardInlineCodeInput").addEventListener("keydown", event => {
+      if (event.key === "Enter" && !document.getElementById("submitVanguardInlineCode").disabled) {
+        submitVanguardCode("vanguardInlineCodeInput", "vanguardInlineCodeMessage");
+      }
+    });
+    updateCitiCodeControls();
+    updateVanguardCodeControls();
+    bindSortButtons();
+    document.getElementById("categoryBarButton").addEventListener("click", () => {
+      categoryView = "bar";
+      renderCategoryView();
+    });
+    document.getElementById("categoryPieButton").addEventListener("click", () => {
+      categoryView = "pie";
+      renderCategoryView();
+    });
+    document.getElementById("monthlyCurrentFirstButton").addEventListener("click", () => {
+      monthlyOrder = "current";
+      renderMonthlyRows();
+    });
+    document.getElementById("monthlyJanuaryFirstButton").addEventListener("click", () => {
+      monthlyOrder = "january";
+      renderMonthlyRows();
+    });
+    document.getElementById("importButton").addEventListener("click", importStatements);
+    document.getElementById("settingsButton").addEventListener("click", openSettings);
+    document.getElementById("closeSettings").addEventListener("click", () => document.getElementById("settingsDialog").close());
+    document.getElementById("closeMonth").addEventListener("click", () => document.getElementById("monthDialog").close());
+    document.getElementById("saveSettings").addEventListener("click", saveSettings);
+    document.getElementById("nightMode").addEventListener("change", event => applyNightMode(event.target.value));
+    document.getElementById("addFolder").addEventListener("click", addFolder);
+    document.getElementById("addAsset").addEventListener("click", addAsset);
+    document.getElementById("institutionFilter").addEventListener("change", event => {
+      currentInstitution = event.target.value;
+      refresh().catch(error => {
+        document.getElementById("message").className = "error";
+        document.getElementById("message").textContent = error.message;
+      });
+    });
+    document.getElementById("periodFilter").addEventListener("change", event => {
+      currentPeriod = event.target.value;
+      refresh().catch(error => {
+        document.getElementById("message").className = "error";
+        document.getElementById("message").textContent = error.message;
+      });
+    });
+    loadSettings()
+      .catch(() => {})
+      .finally(() => {
+        refresh().catch(error => {
+          document.getElementById("message").className = "error";
+          document.getElementById("message").textContent = error.message;
+        });
+      });
+  </script>
+</body>
+</html>
